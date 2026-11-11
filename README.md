@@ -15,9 +15,23 @@ Set `INSTALL_DIR=` to install somewhere else. You need x86-64. Tested on Pop!\_O
 
 ## The icon
 
-The script pulls Linear's real app icon out of the `.dmg` and installs it into the hicolor icon theme at `~/.local/share/icons/hicolor/<size>x<size>/apps/linear.png`, in every size a launcher might ask for. The desktop entry references the theme by name, so the launcher picks the resolution it needs instead of scaling one big image.
+The script pulls Linear's real app icon out of the `.dmg` and installs it into the hicolor icon theme at `~/.local/share/icons/hicolor/<size>x<size>/apps/linear-desktop.png`, in every size a launcher might ask for. The desktop entry references the theme by name, so the launcher picks the resolution it needs instead of scaling one big image.
+
+The name is `linear-desktop` and not `linear` on purpose. Themes such as WhiteSur already ship an icon called `linear` for something else, and a theme entry beats hicolor, so the app would end up with the wrong picture.
 
 If the `.dmg` has no icon, it falls back to the Linear glyph from `linear.app/favicon.ico`.
+
+## It does not show up in the menu
+
+Some desktops only rescan the desktop database on a shell restart. On GNOME, press `Alt+F2`, type `r`, and hit Enter. On KDE, the menu usually picks it up right away.
+
+To check whether the entry is valid without guessing:
+
+```sh
+desktop-file-validate ~/.local/share/applications/linear.desktop
+```
+
+No output means the entry is fine and the desktop just needs a refresh.
 
 ## What works
 

@@ -156,12 +156,17 @@ fi
 
 # Install the icon into the hicolor theme so launchers can pick the size they
 # need instead of scaling one big PNG.
+#
+# The name is "linear-desktop" and not "linear" on purpose. Themes such as
+# WhiteSur already ship an icon called "linear" for something else, and the
+# theme wins over the hicolor fallback, which would show the wrong picture.
 THEME_ROOT="${THEME_ROOT:-$HOME/.local/share/icons/hicolor}"
-ICON_THEME_NAME=""
+ICON_THEME_NAME="linear-desktop"
 if [[ -f "$ICON" ]]; then
-  if python3 "$SCRIPT_DIR/install-icon.py" "$ICON" "$THEME_ROOT" "linear" 2>/dev/null; then
-    info "icon theme: $THEME_ROOT/<size>x<size>/apps/linear.png"
-    ICON_THEME_NAME="linear"
+  if python3 "$SCRIPT_DIR/install-icon.py" "$ICON" "$THEME_ROOT" "$ICON_THEME_NAME" 2>/dev/null; then
+    info "icon theme: $THEME_ROOT/<size>x<size>/apps/$ICON_THEME_NAME.png"
+  else
+    ICON_THEME_NAME=""
   fi
 else
   info "no icon found, the desktop entry will use the generic app icon"
@@ -181,20 +186,38 @@ fi
 cat > "$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
+Version=1.0
 Name=Linear
+GenericName=Issue Tracker
 Comment=The issue tracking tool for modern product development
 Exec=$INSTALL_DIR/linear.sh %U
 $ICON_LINE
 Terminal=false
-Categories=Development;Office;Utility;
+Categories=Development;IDE;
+StartupNotify=true
 StartupWMClass=Linear
 MimeType=x-scheme-handler/linear;
+Keywords=issue;tracker;product;development;tasks;
 EOF
 
 command -v update-desktop-database >/dev/null && update-desktop-database "$(dirname "$DESKTOP_FILE")" 2>/dev/null || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -f -t "$THEME_ROOT" 2>/dev/null || true
 
 command -v xdg-mime >/dev/null && xdg-mime default "$(basename "$DESKTOP_FILE")" x-scheme-handler/linear 2>/dev/null || true
+
+# GNOME Shell caches the desktop database and only rescans it on demand, so a
+# freshly installed app can be missing from the app grid until the shell is
+# restarted. On Wayland, `Alt+F2` then `r` does that. Restart the shell
+# automatically when it is safe to do so.
+if [[ "${XDG_CURRENT_DESKTOP:-}" == *"GNOME"* ]] && command -v gnome-shell >/dev/null \
+   && pgrep -x gnome-shell >/dev/null; then
+  if [[ "${XDG_SESSION_TYPE:-}" == "x11" ]]; then
+    info "restarting gnome-shell so the app appears in the menu right away"
+    ( sleep 1; pkill -x gnome-shell ) >/dev/null 2>&1 &
+  else
+    info "restart gnome-shell (Alt+F2, then r) to see Linear in the app grid"
+  fi
+fi
 
 
 step "Smoke-testing the app"
