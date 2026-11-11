@@ -9,3 +9,7 @@ app.asar.unpacked/
 
 # The macOS icon we extract from the dmg
 icon.icns
+
+# Python bytecode
+__pycache__/
+*.pyc
